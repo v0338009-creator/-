@@ -13,18 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Кэшируем папку .buildozer, чтобы не качать SDK/NDK каждый раз
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
-
-      - name: Cache local Buildozer directory
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+      # Шаг 1: Принудительно создаём файлы лицензий для Android SDK.
+      # Это обходит интерактивный запрос "Accept? (y/N):", из-за которого
+      # Buildozer не может установить build-tools (и, как следствие, aidl).
+      - name: Pre-accept Android SDK licenses
+        run: |
+          mkdir -p .buildozer/android/platform/android-sdk/licenses
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > .buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "\nd56f5187479451eabf01fb78af6dfcb131b33910" > .buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > .buildozer/android/platform/android-sdk/licenses/google-tv-preview-license
+          # Также создаём файлы лицензий в глобальной папке .buildozer_global,
+          # которую мы монтируем в контейнер, на случай если Buildozer проверяет её
+          mkdir -p .buildozer_global/licenses
+          echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > .buildozer_global/licenses/android-sdk-license
+          echo -e "\nd56f5187479451eabf01fb78af6dfcb131b33910" > .buildozer_global/licenses/android-sdk-preview-license
 
       - name: Build APK in Docker
         run: |
@@ -32,7 +34,6 @@ jobs:
             -v $PWD:/home/user/hostcwd \
             -v $PWD/.buildozer_global:/home/user/.buildozer_global \
             -v $PWD/.buildozer:/home/user/.buildozer \
-            -e APP_ANDROID_ACCEPT_SDK_LICENSE=1 \
             ghcr.io/kivy/buildozer:latest \
             -v android debug
 
