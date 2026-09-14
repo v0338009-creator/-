@@ -15,7 +15,7 @@ jobs:
 
       - name: Build APK in Docker
         run: |
-          docker run --rm \
+          yes | docker run --rm -i \
             -v $PWD:/home/user/hostcwd \
             -v $PWD/.buildozer:/home/user/.buildozer \
             ghcr.io/kivy/buildozer:latest \
