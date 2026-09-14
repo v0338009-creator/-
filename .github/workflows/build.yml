@@ -13,11 +13,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Кэшируем папку .buildozer, чтобы не качать SDK/NDK каждый раз
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: .buildozer_global
+          key: buildozer-global-${{ hashFiles('buildozer.spec') }}
+
+      - name: Cache local Buildozer directory
+        uses: actions/cache@v4
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+
       - name: Build APK in Docker
         run: |
-          yes | docker run --rm -i \
+          docker run --rm \
             -v $PWD:/home/user/hostcwd \
+            -v $PWD/.buildozer_global:/home/user/.buildozer_global \
             -v $PWD/.buildozer:/home/user/.buildozer \
+            -e APP_ANDROID_ACCEPT_SDK_LICENSE=1 \
             ghcr.io/kivy/buildozer:latest \
             -v android debug
 
