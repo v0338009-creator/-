@@ -13,29 +13,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Шаг 1: Указываем Buildozer использовать наш код как "рабочую директорию"
-      # (Buildozer ищет main.py в /home/user/hostcwd)
-      - name: Prepare source
-        run: |
-          mkdir -p buildozer_src
-          cp main.py buildozer_src/
-          # Если у вас есть другие файлы (например, buildozer.spec), скопируйте их тоже:
-          # cp *.py *.kv buildozer_src/ 2>/dev/null || true
-
-      # Шаг 2: Запускаем Docker-контейнер Buildozer.
-      # Он сам скачает SDK/NDK, установит p4a и соберёт APK.
-      # Это займёт 20-40 минут, но пройдёт без ошибок окружения.
       - name: Build APK in Docker
         run: |
           docker run --rm \
-            -v $PWD/buildozer_src:/home/user/hostcwd \
+            -v $PWD:/home/user/hostcwd \
             -v $PWD/.buildozer:/home/user/.buildozer \
             ghcr.io/kivy/buildozer:latest \
             -v android debug
 
-      # Шаг 3: Забираем готовый APK из папки bin/
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: calculator-apk
-          path: buildozer_src/bin/*.apk
+          path: bin/*.apk
