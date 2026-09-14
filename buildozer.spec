@@ -22,3 +22,5 @@ android.archs = arm64-v8a
 android.permissions = 
 android.presplash_color = #1E1E1E
 android.allow_backup = True
+android.accept_sdk_license = True
+android.skip_update = False
